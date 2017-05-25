@@ -5,41 +5,52 @@ $(function () {
             form = $(this);
 
         $.post({ // Отправка ajax запроса на добавление задачи
-            url: 'controller.php',
+            url: 'src/controller.php',
             data: {addTask: 'true', task: description.val()},
             dataType: 'json',
             cache: false,
             success: function (data) { // При успехе добавляем задачу в таблицу
                 var tableRow =
                     $('<tr style="background-color: lightgreen">' +
-                    '<td>' + data['description'] + '</td>' +
-                    '<td style="color: orange">В процессе</td>' +
-                    '<td>' + data['date_added'] + '</td>' +
-                    '<td>' +
-                    '<p class=\'edit link\'>Изменить &#9998; </p>' +
-                    '<p class=\'done link\'>Выполнить &#10004; </p>' +
-                    '<p class=\'delete link\'>Удалить &cross; </p>' +
-                    '<input type="hidden" value="' + data['id'] + '">' +
-                    '</td>' +
-                    '</tr>').css({
+                        '<td>' + data['description'] + '</td>' +
+                        '<td style="color: orange">В процессе</td>' +
+                        '<td>' + data['date_added'] + '</td>' +
+                        '<td>' +
+                        '<p class=\'edit link\'>Изменить &#9998; </p>' +
+                        '<p class=\'done link\'>Выполнить &#10004; </p>' +
+                        '<p class=\'delete link\'>Удалить &cross; </p>' +
+                        '<input type="hidden" value="' + data['id'] + '">' +
+                        '</td>' +
+                        '</tr>').css({
                         backgroundColor: 'lightgreen'
                     });
 
                 var table = $('table');
                 if (table.length === 1) { // Если таблица есть, просто вставить задачу (+ анимация цвета при добавлении)
                     table.append(tableRow);
-                    if(($('tr').length-1)%2 === 0) { // Если четная - фон ряда серый, если нечетная - фон ряда белый
+                    if (($('tr').length - 1) % 2 === 0) { // Если четная - фон ряда серый, если нечетная - фон ряда белый
                         tableRow.animate({
-                            backgroundColor:'#eeeeee'
+                            backgroundColor: '#eeeeee'
                         }, 2000);
                     } else {
                         tableRow.animate({
-                            backgroundColor:'white'
+                            backgroundColor: 'white'
                         }, 2000);
                     }
                 } else { // Если таблицы нет, создаем ее и добавляем туда задачу (+ анимация цвета при добавлени)
                     var tr = tableRow[0]['outerHTML'];
                     $('.tasks').html(
+                        '<form method="POST" class="sortForm">' +
+                        '<label>' +
+                        'Сортировать по: ' +
+                        '<select name="sortBy" id="sortBy">' +
+                        '<option value="date">Дате добавления</option>' +
+                        '<option value="status">Статусу</option>' +
+                        '<option value="description">Описанию</option>' +
+                        '</select>' +
+                        '</label> ' +
+                        '<input type="submit" name="sort" id="sort" value="Сортировка"> ' +
+                        '</form>' +
                         '<table>' +
                         '<tr>' +
                         '<td>Задача</td>' +
@@ -51,12 +62,11 @@ $(function () {
                         '</table>'
                     );
                     $('table tr:eq(1)').animate({
-                        backgroundColor:'white'
+                        backgroundColor: 'white'
                     }, 2000);
                 }
             },
             error: function (data) { // При ошибке показать уведомление
-                console.log(data);
                 form.prepend('<p class="notice" style="color: red">Произошла ошибка, попробуйте еще раз! (' + data.responseText + ')</p>');
                 $('.notice').delay(1500).fadeOut(1000, function () {
                     $(this).css({
@@ -96,7 +106,7 @@ $(function () {
         }
 
         $.post({
-            url: 'controller.php',
+            url: 'src/controller.php',
             data: {done: 'true', id: id},
             success: function (data) {
                 div.closest('tr').children('td:eq(1)').text(data).css({
@@ -113,7 +123,7 @@ $(function () {
             id = div.closest('td').find('input[type=hidden]').val();
 
         $.post({
-            url: 'controller.php',
+            url: 'src/controller.php',
             data: {delete: 'true', id: id},
             success: function () {
                 div.closest('tr').remove();
@@ -137,7 +147,7 @@ $(function () {
         td.fadeOut('fast', function () {
             var replaceElement = $('<td>' +
                 '<form method="POST" class="editTaskForm">' +
-                '<input type="text" name="editDescription" value="' + text + '"><br>' +
+                '<input type="text" name="editDescription" value="' + text + '" required><br>' +
                 '<input type="submit" value="Изменить" name="editTask" class="button">' +
                 '<input type="hidden" name="id" value="' + id + '">' +
                 '</form>' +
@@ -151,10 +161,13 @@ $(function () {
         $(document).on('submit', '.editTaskForm', function (e) {
             var form = $(this);
             $.post({
-                url: 'controller.php',
-                data: $(this).serialize(),
+                url: 'src/controller.php',
+                data: form.serialize(),
                 success: function (data) {
                     form.replaceWith(data);
+                },
+                error: function (data) { // Не работает, исправить
+                    console.log('Ошибка ' + data);
                 }
             });
 
@@ -162,4 +175,42 @@ $(function () {
         })
     });
 
+    $(document).on('submit', '.sortForm', function (e) {
+        var form = $(this);
+        $.post({
+            url: 'src/controller.php',
+            data: form.serialize(),
+            dataType: 'json',
+            cache: false,
+            success: function (data) {
+                $('table tr:not(:first)').remove();
+                $.each(data, function (key, value) {
+                    var isDone = value['is_done'];
+                    if (isDone == 0) {
+                        var processTd = '<td style="color: orange">В процессе</td>',
+                            done = '<p class=\'done link\'>Выполнить &#10004; </p>';
+                    }
+                    if (isDone == 1) {
+                        var processTd = '<td style="color: green">Выполнено</td>',
+                            done = '';
+                    }
+
+                    $('table').append(
+                        '<tr>' +
+                        '<td>' + value['description'] + '</td>' +
+                        processTd +
+                        '<td>' + value['date_added'] + '</td>' +
+                        '<td>' +
+                        '<p class=\'edit link\'>Изменить &#9998; </p>' +
+                        done +
+                        '<p class=\'delete link\'>Удалить &cross; </p>' +
+                        '<input type="hidden" value="' + value['id'] + '">' +
+                        '</td>' +
+                        '</tr>'
+                    )
+                });
+            }
+        });
+        e.preventDefault();
+    });
 });

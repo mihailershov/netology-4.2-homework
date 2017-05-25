@@ -8,8 +8,7 @@ if (!empty($_POST['addTask'])) {
 }
 
 if (!empty($_POST['done'])) {
-    $status = $task->setTaskIsDone() ? 'Выполнено' : 'В процессе';
-    echo $status;
+    echo $task->setTaskIsDone() ? 'Выполнено' : 'В процессе';
 }
 
 if (!empty($_POST['delete'])) {
@@ -18,4 +17,9 @@ if (!empty($_POST['delete'])) {
 
 if (!empty($_POST['editDescription'])) {
     echo $task->editTask();
+}
+
+if (!empty($_POST['sortBy'])) {
+    $table = new TaskTable;
+    echo $table->sortTable($_POST['sortBy']);
 }

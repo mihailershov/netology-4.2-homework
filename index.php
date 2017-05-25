@@ -1,5 +1,5 @@
 <?php
-require_once 'core.php';
+require_once 'src/core.php';
 ?>
 <!doctype html>
 <html lang="en">
@@ -19,6 +19,19 @@ require_once 'core.php';
             <p class="smile">&#9785;</p>
             <p style="text-align: center;">Вы пока не добавили ни одной задачи</p>
         <?php else: ?>
+
+            <form method="POST" class="sortForm">
+                <label>
+                    Сортировать по:
+                    <select name="sortBy" id="sortBy">
+                        <option value="date">Дате добавления</option>
+                        <option value="status">Статусу</option>
+                        <option value="description">Описанию</option>
+                    </select>
+                </label>
+                <input type="submit" name="sort" id="sort" value="Сортировка">
+            </form>
+
             <table>
                 <tr>
                     <td>Задача</td>
@@ -51,17 +64,6 @@ require_once 'core.php';
             <textarea name="task" placeholder="Задача" id="task" cols="50" rows="3" required></textarea>
             <input type="submit" name="addTask" value="Добавить задачу" class="button">
         </form>
-        <!--        <form method="POST">
-                    <label>
-                        Сортировать по:
-                        <select name="sortBy" id="sortBy">
-                            <option value="date">Дате добавления</option>
-                            <option value="status">Статусу</option>
-                            <option value="description">Описанию</option>
-                        </select>
-                    </label>
-                    <input type="submit" name="sort" id="sort" value="Сортировка">
-                </form>-->
     </div>
 </div>
 

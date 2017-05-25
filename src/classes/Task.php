@@ -9,7 +9,7 @@ class Task
     protected $dbpassword = 'neto1048';
 
     // Подключение к бд
-    private function connectToDb()
+    protected function connectToDb()
     {
         try {
             $pdo = new PDO("mysql:host=$this->host;dbname=$this->dbname;charset=utf8", $this->dbuser, $this->dbpassword, [
@@ -22,7 +22,7 @@ class Task
     }
 
     // Отправка запроса
-    private function sendQueryToDb($pdo, $query, $queryParams = [])
+    protected function sendQueryToDb($pdo, $query, $queryParams = [])
     {
         $statement = $pdo->prepare($query);
         try {
@@ -96,10 +96,12 @@ class Task
 
         $query = "UPDATE tasks SET description = ? WHERE id = ?";
         $description = (string)!empty($_POST['editDescription']) ? $_POST['editDescription'] : 0;
+        if (!trim($description) || strlen(trim($description)) === 0) {
+            die('задача без пробелов? интересно...'); // Jquery не видит этот die и выдает success, исправить!
+        }
         $id = (int)!empty($_POST['id']) ? $_POST['id'] : 0;
 
         $this->sendQueryToDb($pdo, $query, [$description, $id]);
         return $description;
     }
-
 }
