@@ -1,7 +1,5 @@
 <?php
-
-require_once 'controller.php';
-
+require_once 'core.php';
 ?>
 <!doctype html>
 <html lang="en">
@@ -19,7 +17,7 @@ require_once 'controller.php';
 
         <?php if ($allTasks->rowCount() === 0): ?>
             <p class="smile">&#9785;</p>
-            <p>Вы пока не добавили ни одной зачади</p>
+            <p style="text-align: center;">Вы пока не добавили ни одной задачи</p>
         <?php else: ?>
             <table>
                 <tr>
@@ -31,15 +29,15 @@ require_once 'controller.php';
                 <?php foreach ($allTasks as $task): ?>
                     <tr>
                         <td><?php echo htmlspecialchars($task['description']) ?></td>
-                        <td><?php echo htmlspecialchars($task['is_done']) ? '<p style="color: green">Выполнено</p>' : '<p style="color: orange">В процессе</p>' ?></td>
+                        <?php echo htmlspecialchars($task['is_done']) ? '<td style="color: green">Выполнено</td>' : '<td style="color: orange">В процессе</td>' ?>
                         <td><?php echo htmlspecialchars($task['date_added']) ?></td>
                         <td>
                             <p class='edit link'>Изменить &#9998;</p>
-                            <form method="POST">
-                                <input type="submit" name="done" value="Выполнить &#10004;" class="link">
-                                <input type="submit" name="delete" value="Удалить &cross;" class="link">
-                                <input type="hidden" name="id" value="<?php echo $task['id']; ?>">
-                            </form>
+                            <?php if (!$task['is_done']): ?>
+                                <p class='done link'>Выполнить &#10004;</p>
+                            <?php endif; ?>
+                            <p class='delete link'>Удалить &cross;</p>
+                            <input type="hidden" value="<?php echo $task['id'] ?>">
                         </td>
                     </tr>
                 <?php endforeach; ?>
@@ -50,10 +48,6 @@ require_once 'controller.php';
 
     <div class="forms">
         <form method="POST" class="addTaskForm">
-            <?php if (!empty($_SESSION['notice'])): ?>
-                <p class="notice"><?php echo $_SESSION['notice']; ?> &#10004;</p>
-                <?php unset($_SESSION['notice']) ?>
-            <?php endif; ?>
             <textarea name="task" placeholder="Задача" id="task" cols="50" rows="3" required></textarea>
             <input type="submit" name="addTask" value="Добавить задачу" class="button">
         </form>
@@ -72,6 +66,7 @@ require_once 'controller.php';
 </div>
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script src="http://code.jquery.com/color/jquery.color-2.1.2.min.js"></script>
 <script src="js/index.js"></script>
 
 </body>

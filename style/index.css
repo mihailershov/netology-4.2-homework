@@ -88,6 +88,10 @@ table {
     margin: 20px 20px 0;
 }
 
+.tasks {
+    width: 1000px;
+}
+
 .notice {
     color: darkgreen;
 }

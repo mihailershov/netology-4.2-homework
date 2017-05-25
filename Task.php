@@ -8,14 +8,9 @@ class Task
     protected $dbuser = 'ershov';
     protected $dbpassword = 'neto1048';
 
-    public function addTask()
+    // Подключение к бд
+    private function connectToDb()
     {
-
-        $description = (string)(isset($_POST['task']) ? $_POST['task'] : "");
-        if (empty($description) || strlen($description) < 3) {
-            return false;
-        }
-
         try {
             $pdo = new PDO("mysql:host=$this->host;dbname=$this->dbname;charset=utf8", $this->dbuser, $this->dbpassword, [
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
@@ -23,106 +18,88 @@ class Task
         } catch (PDOException $e) {
             die('Произошла ошибка, не удалось установить соединение с базой');
         }
+        return $pdo;
+    }
 
-        $query = "INSERT INTO tasks (description, date_added) VALUE (?, NULL)";
+    // Отправка запроса
+    private function sendQueryToDb($pdo, $query, $queryParams = [])
+    {
         $statement = $pdo->prepare($query);
-
         try {
-            $statement->execute([$description]);
+            $statement->execute($queryParams);
         } catch (PDOException $e) {
             die('Произошла ошибка, не удалось выполнить запрос');
         }
-
-        return true;
+        return $statement;
     }
 
     public function getAllTasks()
     {
-        try {
-            $pdo = new PDO("mysql:host=$this->host;dbname=$this->dbname;charset=utf8", $this->dbuser, $this->dbpassword, [
-                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
-            ]);
-        } catch (PDOException $e) {
-            die('Произошла ошибка, не удалось установить соединение с базой');
-        }
+        $pdo = $this->connectToDb();
 
         $query = "SELECT * FROM tasks";
-        $statement = $pdo->prepare($query);
 
-        try {
-            $statement->execute();
-        } catch (PDOException $e) {
-            die('Произошла ошибка, не удалось выполнить запрос');
+        return $this->sendQueryToDb($pdo, $query);
+    }
+
+    public function addTask()
+    {
+        $pdo = $this->connectToDb();
+
+        $query = "INSERT INTO tasks (description, date_added) VALUE (?, NOW())";
+        $description = (string)(isset($_POST['task']) ? $_POST['task'] : "");
+        $description = trim($description);
+        if (!strlen($description)) {
+            die('зачем же вам задача из одних пробелов?');
         }
 
-        return $statement;
+        return $this->sendQueryToDb($pdo, $query, [$description]);
+    }
+
+    public function getLastTask()
+    {
+        $pdo = $this->connectToDb();
+
+        $query = "SELECT description, date_added, id FROM tasks ORDER BY id DESC LIMIT 1";
+
+        $result = $this->sendQueryToDb($pdo, $query)->fetch(PDO::FETCH_ASSOC);
+
+        $result = json_encode($result);
+        return $result;
     }
 
     public function setTaskIsDone()
     {
-        try {
-            $pdo = new PDO("mysql:host=$this->host;dbname=$this->dbname;charset=utf8", $this->dbuser, $this->dbpassword, [
-                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
-            ]);
-        } catch (PDOException $e) {
-            die('Произошла ошибка, не удалось установить соединение с базой');
-        }
-
-        $id = (int)!empty($_POST['id']) ? $_POST['id'] : 0;
+        $pdo = $this->connectToDb();
 
         $query = "UPDATE tasks SET is_done = 1 WHERE id = ?";
-        $statement = $pdo->prepare($query);
+        $id = (int)!empty($_POST['id']) ? $_POST['id'] : 0;
 
-        try {
-            $statement->execute([$id]);
-        } catch (PDOException $e) {
-            die('Произошла ошибка, не удалось выполнить запрос');
-        }
+        $this->sendQueryToDb($pdo, $query, [$id]);
+        return true;
     }
 
     public function deleteTask()
     {
-        try {
-            $pdo = new PDO("mysql:host=$this->host;dbname=$this->dbname;charset=utf8", $this->dbuser, $this->dbpassword, [
-                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
-            ]);
-        } catch (PDOException $e) {
-            die('Произошла ошибка, не удалось установить соединение с базой');
-        }
-
-        $id = (int)!empty($_POST['id']) ? $_POST['id'] : 0;
+        $pdo = $this->connectToDb();
 
         $query = "DELETE FROM tasks WHERE id = ?";
-        $statement = $pdo->prepare($query);
+        $id = (int)!empty($_POST['id']) ? $_POST['id'] : 0;
 
-        try {
-            $statement->execute([$id]);
-        } catch (PDOException $e) {
-            die('Произошла ошибка, не удалось выполнить запрос');
-        }
+
+        $this->sendQueryToDb($pdo, $query, [$id]);
     }
 
     public function editTask()
     {
-        try {
-            $pdo = new PDO("mysql:host=$this->host;dbname=$this->dbname;charset=utf8", $this->dbuser, $this->dbpassword, [
-                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
-            ]);
-        } catch (PDOException $e) {
-            die('Произошла ошибка, не удалось установить соединение с базой');
-        }
+        $pdo = $this->connectToDb();
 
+        $query = "UPDATE tasks SET description = ? WHERE id = ?";
         $description = (string)!empty($_POST['editDescription']) ? $_POST['editDescription'] : 0;
         $id = (int)!empty($_POST['id']) ? $_POST['id'] : 0;
 
-        $query = "UPDATE tasks SET description = ? WHERE id = ?";
-        $statement = $pdo->prepare($query);
-
-        try {
-            $statement->execute([$description, $id]);
-        } catch (PDOException $e) {
-            die('Произошла ошибка, не удалось выполнить запрос');
-        }
+        $this->sendQueryToDb($pdo, $query, [$description, $id]);
+        return $description;
     }
 
 }
