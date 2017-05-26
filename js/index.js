@@ -11,35 +11,30 @@ $(function () {
             cache: false,
             success: function (data) { // При успехе добавляем задачу в таблицу
                 var tableRow =
-                    $('<tr style="background-color: lightgreen">' +
-                        '<td>' + data['description'] + '</td>' +
-                        '<td style="color: orange">В процессе</td>' +
-                        '<td>' + data['date_added'] + '</td>' +
-                        '<td>' +
-                        '<p class=\'edit link\'>Изменить &#9998; </p>' +
-                        '<p class=\'done link\'>Выполнить &#10004; </p>' +
-                        '<p class=\'delete link\'>Удалить &cross; </p>' +
-                        '<input type="hidden" value="' + data['id'] + '">' +
-                        '</td>' +
-                        '</tr>').css({
-                        backgroundColor: 'lightgreen'
-                    });
+                        $('<tr>' +
+                            '<td>' + data['description'] + '</td>' +
+                            '<td style="color: orange">В процессе</td>' +
+                            '<td>' + data['date_added'] + '</td>' +
+                            '<td>' +
+                            '<p class=\'edit link\'>Изменить &#9998; </p>' +
+                            '<p class=\'done link\'>Выполнить &#10004; </p>' +
+                            '<p class=\'delete link\'>Удалить &cross; </p>' +
+                            '<input type="hidden" value="' + data['id'] + '">' +
+                            '</td>' +
+                            '</tr>'),
+                    tableRowWithoutSelector = tableRow[0]['outerHTML'],
+                    table = $('table');
 
-                var table = $('table');
                 if (table.length === 1) { // Если таблица есть, просто вставить задачу (+ анимация цвета при добавлении)
                     table.append(tableRow);
-                    if (($('tr').length - 1) % 2 === 0) { // Если четная - фон ряда серый, если нечетная - фон ряда белый
-                        tableRow.animate({
-                            backgroundColor: '#eeeeee'
-                        }, 2000);
-                    } else {
-                        tableRow.animate({
-                            backgroundColor: 'white'
-                        }, 2000);
-                    }
+                    tableRow.css({
+                        backgroundColor: 'lightgreen'
+                    }).animate({
+                        backgroundColor: ($('tr').length - 1) % 2 === 0 ? '#eeeeee' : 'white'
+                    })
                 } else { // Если таблицы нет, создаем ее и добавляем туда задачу (+ анимация цвета при добавлени)
-                    var tr = tableRow[0]['outerHTML'];
-                    $('.tasks').html(
+                    var tasks = $('.tasks');
+                    tasks.html(
                         '<form method="POST" class="sortForm">' +
                         '<label>' +
                         'Сортировать по: ' +
@@ -58,12 +53,15 @@ $(function () {
                         '<td>Дата добавления</td>' +
                         '<td>Действия</td>' +
                         '</tr>' +
-                        tr +
+                        tableRowWithoutSelector +
                         '</table>'
                     );
-                    $('table tr:eq(1)').animate({
+
+                    tasks.find('tr:eq(1)').css({
+                        backgroundColor: 'lightgreen'
+                    }).animate({
                         backgroundColor: 'white'
-                    }, 2000);
+                    })
                 }
             },
             error: function (data) { // При ошибке показать уведомление
@@ -99,9 +97,10 @@ $(function () {
     // Отметить задачу, как выполненную
     $(document).on('click', '.done', function () {
         var div = $(this),
-            id = div.closest('td').find('input[type=hidden]').val();
+            id = div.closest('td').find('input[type=hidden]').val(),
+            isDoneTd = div.closest('tr').children('td:eq(1)');
 
-        if (div.closest('tr').children('td:eq(1)').text() === 'Выполнено') { // Если уже выполненная, то ничего не делать
+        if (isDoneTd.text() === 'Выполнено') { // Если уже выполненная, то ничего не делать
             return;
         }
 
@@ -109,7 +108,7 @@ $(function () {
             url: 'src/controller.php',
             data: {done: 'true', id: id},
             success: function (data) {
-                div.closest('tr').children('td:eq(1)').text(data).css({
+                isDoneTd.text(data).css({
                     'color': 'green'
                 });
                 div.fadeOut('fast');
@@ -126,13 +125,26 @@ $(function () {
             url: 'src/controller.php',
             data: {delete: 'true', id: id},
             success: function () {
-                div.closest('tr').remove();
-                if ($('table tr').length - 1 === 0) { // Если мы удаляем последную задачу, убрать таблицу
+                var tableTr = $('table tr:not(:first)');
+                if (tableTr.length - 1 === 0) { // Если мы удаляем последную задачу, убрать таблицу
                     $('.tasks').html(
                         '<p class="smile">&#9785;</p>' +
                         '<p style="text-align: center;">Вы пока не добавили ни одной задачи</p>'
                     );
+                    return;
                 }
+                div.closest('tr').remove();
+                tableTr.each(function () {
+                   if ($(this).index() % 2 === 0) {
+                       $(this).css({
+                           backgroundColor: '#eeeeee'
+                       })
+                   } else {
+                       $(this).css({
+                           backgroundColor: 'white'
+                       })
+                   }
+                });
             }
         });
     });
