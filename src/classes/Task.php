@@ -97,7 +97,7 @@ class Task
         $query = "UPDATE tasks SET description = ? WHERE id = ?";
         $description = (string)!empty($_POST['editDescription']) ? $_POST['editDescription'] : 0;
         if (!trim($description) || strlen(trim($description)) === 0) {
-            die('задача без пробелов? интересно...'); // Jquery не видит этот die и выдает success, исправить!
+            die('задача из пробелов? интересно...'); // Jquery не видит этот die и выдает success, исправить!
         }
         $id = (int)!empty($_POST['id']) ? $_POST['id'] : 0;
 
